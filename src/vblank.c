@@ -29,6 +29,8 @@
 #include "vblank.h"
 #include "x.h"
 
+#include "uds.h"
+
 struct vblank_closure {
 	vblank_callback_t fn;
 	void *user_data;
@@ -225,7 +227,10 @@ static void *sgi_video_sync_thread(void *data) {
 		}
 		pthread_mutex_unlock(&self->vblank_requested_mtx);
 
+		// AS: looks like this is the blocking call that causes vsync delays
+		uds_send_start();
 		glXWaitVideoSyncSGI(1, 0, &last_msc);
+		uds_send_end();
 
 		struct timespec now = {};
 		clock_gettime(CLOCK_MONOTONIC, &now);

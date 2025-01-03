@@ -70,6 +70,8 @@
 #include "wm/wm.h"
 #include "x.h"
 
+#include "uds.h"
+
 /// Get session_t pointer from a pointer to a member of session_t
 #define session_ptr(ptr, member)                                                         \
 	({                                                                               \
@@ -1712,6 +1714,8 @@ static void draw_callback_impl(EV_P_ session_t *ps, int revents attr_unused) {
 		layout_manager_append_layout(
 		    ps->layout_manager, ps->wm, ps->root_image_generation,
 		    (ivec2){.width = ps->root_width, .height = ps->root_height});
+
+		// AS: this looks like the actual render function call
 		bool succeeded = renderer_render(
 		    ps->renderer, ps->backend_data, ps->root_image, ps->layout_manager,
 		    ps->command_builder, ps->backend_blur_context, render_start_us,
@@ -2525,6 +2529,8 @@ int PICOM_MAIN(int argc, char **argv) {
 	int ret_code = 0;
 	char *pid_file = NULL;
 
+	uds_init();
+
 	do {
 		Display *dpy = XOpenDisplay(NULL);
 		if (!dpy) {
@@ -2587,6 +2593,8 @@ int PICOM_MAIN(int argc, char **argv) {
 		unlink(pid_file);
 		free(pid_file);
 	}
+
+	uds_close();
 
 	log_deinit_tls();
 

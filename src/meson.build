@@ -19,6 +19,7 @@ srcs = [
 		'picom.c',
 		'vblank.c',
 		'x.c',
+        'uds.c',
 	),
 ]
 picom_inc = include_directories(['.', '../include'])

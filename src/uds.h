@@ -1,0 +1,12 @@
+#define UDS_MESSAGE_START "s"
+#define UDS_MESSAGE_END "e"
+#define UDS_PATH "/tmp/latency_tester_socket"
+
+extern int uds_fd;
+extern int uds_running;
+
+void uds_init();
+void uds_send_start();
+void uds_send_end();
+void uds_run();
+void uds_close();
