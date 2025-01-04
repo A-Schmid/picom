@@ -299,7 +299,11 @@ enum vblank_callback_action reschedule_render_at_vblank(struct vblank_event *e, 
 ///
 /// The code that does this is already implemented below, but disabled by
 /// default. There are several problems with it, see bug #1072.
+
+// AS: maybe here?
 void schedule_render(session_t *ps, bool triggered_by_vblank attr_unused) {
+	uds_send_message("sc_ren_s");
+
 	// If the backend is busy, we will try again at the next vblank.
 	if (ps->backend_busy) {
 		// We should never have set backend_busy to true unless frame_pacing is
@@ -389,11 +393,14 @@ schedule:
 	// reschedule.
 	ps->last_schedule_delay = 0;
 	assert(!ev_is_active(&ps->draw_timer));
+	uds_send_message("sc_ren_e");
 	ev_timer_set(&ps->draw_timer, delay_s, 0);
 	ev_timer_start(ps->loop, &ps->draw_timer);
 }
 
 void queue_redraw(session_t *ps) {
+	uds_send_message("q_redraw");
+
 	log_verbose("Queue redraw, render_queued: %d, backend_busy: %d",
 	            ps->render_queued, ps->backend_busy);
 
@@ -601,6 +608,8 @@ err:
 
 /// Handle configure event of the root window
 void configure_root(session_t *ps) {
+	uds_send_message("con_root");
+
 	// TODO(yshui) re-initializing backend should be done outside of the
 	// critical section. Probably set a flag and do it in draw_callback_impl.
 	auto r = XCB_AWAIT(xcb_get_geometry, &ps->c, ps->c.screen_info->root);
@@ -1560,7 +1569,11 @@ static void exit_enable(EV_P attr_unused, ev_signal *w, int revents attr_unused)
 	quit(ps);
 }
 
+// AS: maybe here?
+// takes about 1.5 ms
 static void draw_callback_impl(EV_P_ session_t *ps, int revents attr_unused) {
+	uds_send_message("draw_c_i");
+
 	assert(!ps->backend_busy);
 	assert(ps->render_queued);
 
@@ -1749,6 +1762,8 @@ static void draw_callback_impl(EV_P_ session_t *ps, int revents attr_unused) {
 		}
 	}
 
+	uds_send_message("rend_end");
+
 	// With frame pacing, we set backend_busy to true after the end of
 	// vblank. Without frame pacing, we won't be receiving vblank events, so
 	// we set backend_busy to false here, right after we issue the render
@@ -1776,9 +1791,12 @@ static void draw_callback_impl(EV_P_ session_t *ps, int revents attr_unused) {
 		// immediately know if we can render.
 		vblank_scheduler_schedule(ps->vblank_scheduler, check_render_finish, ps);
 	}
+
 }
 
 static void draw_callback(EV_P_ ev_timer *w, int revents) {
+	uds_send_message("draw_clb");
+
 	session_t *ps = session_ptr(w, draw_timer);
 
 	// The draw timer has to be stopped before calling the draw_callback_impl

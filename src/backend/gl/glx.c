@@ -34,6 +34,9 @@
 #include "gl_common.h"
 #include "glx.h"
 
+#include "uds.h"
+#include <stdio.h>
+
 struct _glx_data {
 	struct gl_data gl;
 	xcb_window_t target_win;
@@ -214,6 +217,7 @@ static bool glx_set_swap_interval(int interval, Display *dpy, GLXDrawable drawab
 		glXSwapIntervalEXT(dpy, drawable, interval);
 		vsync_enabled = true;
 	}
+	printf("vsync state: %d\n", vsync_enabled);
 	return vsync_enabled;
 }
 
@@ -448,10 +452,14 @@ err:
 	return NULL;
 }
 
+// AS: maybe here?
+// takes about 0.3 ms
 static bool glx_present(backend_t *base) {
 	struct _glx_data *gd = (void *)base;
+	//uds_send_start();
 	gl_finish_render(&gd->gl);
 	glXSwapBuffers(base->c->dpy, gd->target_win);
+	//uds_send_end();
 	return true;
 }
 

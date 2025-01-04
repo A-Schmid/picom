@@ -14,6 +14,9 @@
 #include "picom.h"
 #include "utils/dynarr.h"
 
+#include <stdio.h>
+#include "uds.h"
+
 struct renderer {
 	/// Intermediate image to hold what will be presented to the back buffer.
 	image_handle back_image;
@@ -492,6 +495,10 @@ bool renderer_render(struct renderer *r, struct backend_base *backend,
                      bool force_blend, bool blur_frame, bool inactive_dim_fixed,
                      double max_brightness, const struct x_monitors *monitors,
                      const struct shader_info *shaders, uint64_t *after_damage_us) {
+	//AS
+	//uds_send_start();
+	uds_send_message("render_s");
+
 	if (xsync_fence != XCB_NONE) {
 		// Trigger the fence but don't immediately wait on it. Let it run
 		// concurrent with our CPU tasks to save time.
@@ -632,6 +639,10 @@ bool renderer_render(struct renderer *r, struct backend_base *backend,
 	if (backend->ops.present && !backend->ops.present(backend)) {
 		log_warn("Failed to present the frame");
 	}
+
+	//AS
+	//uds_send_end();
+	uds_send_message("render_e");
 
 	// "Un-cull" the render commands, so later damage calculation using those commands
 	// will not use culled regions.

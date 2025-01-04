@@ -30,6 +30,7 @@
 #include "x.h"
 
 #include "uds.h"
+#include <stdio.h>
 
 struct vblank_closure {
 	vblank_callback_t fn;
@@ -136,6 +137,9 @@ static bool check_sgi_video_sync_extension(Display *dpy, int screen) {
 }
 
 static void *sgi_video_sync_thread(void *data) {
+
+	printf("sgi_video_sync_thread\n");
+
 	auto args = (struct sgi_video_sync_thread_args *)data;
 	auto self = args->self;
 	Display *dpy = XOpenDisplay(NULL);
@@ -228,9 +232,9 @@ static void *sgi_video_sync_thread(void *data) {
 		pthread_mutex_unlock(&self->vblank_requested_mtx);
 
 		// AS: looks like this is the blocking call that causes vsync delays
-		uds_send_start();
+		//uds_send_start();
 		glXWaitVideoSyncSGI(1, 0, &last_msc);
-		uds_send_end();
+		//uds_send_end();
 
 		struct timespec now = {};
 		clock_gettime(CLOCK_MONOTONIC, &now);
@@ -289,6 +293,9 @@ static void
 sgi_video_sync_scheduler_callback(EV_P attr_unused, ev_async *w, int attr_unused revents);
 
 static bool sgi_video_sync_scheduler_init(struct vblank_scheduler *base) {
+
+	printf("sgi_video_sync_scheduler_init\n");
+
 	auto self = (struct sgi_video_sync_vblank_scheduler *)base;
 	auto args = (struct sgi_video_sync_thread_args){
 	    .self = self,
@@ -376,7 +383,9 @@ sgi_video_sync_scheduler_callback(EV_P attr_unused, ev_async *w, int attr_unused
 }
 #endif
 
+// AS: vblank gets scheduled here
 static bool present_vblank_scheduler_schedule(struct vblank_scheduler *base) {
+	uds_send_message("vb_sched");
 	auto self = (struct present_vblank_scheduler *)base;
 	log_verbose("Requesting vblank event for window 0x%08x, msc %" PRIu64,
 	            base->target_window, self->last_msc + 1);
@@ -386,7 +395,9 @@ static bool present_vblank_scheduler_schedule(struct vblank_scheduler *base) {
 	return true;
 }
 
+// AS: vblank happens here!
 static void present_vblank_callback(EV_P attr_unused, ev_timer *w, int attr_unused revents) {
+	uds_send_message("vb_callb");
 	auto sched = container_of(w, struct present_vblank_scheduler, callback_timer);
 	auto event = (struct vblank_event){
 	    .msc = sched->last_msc,
@@ -420,6 +431,7 @@ static void present_vblank_scheduler_deinit(struct vblank_scheduler *base) {
 	xcb_unregister_for_special_event(base->c->c, self->event);
 }
 
+// AS: maybe this is the way??
 /// Handle PresentCompleteNotify events
 ///
 /// Schedule the registered callback to be called when the current vblank ends.
@@ -461,6 +473,12 @@ static void handle_present_complete_notify(struct present_vblank_scheduler *self
 		          cne->ust - now_us);
 		delay_sec = (double)(cne->ust - now_us) / 1000000.0;
 	}
+
+	//AS
+	//uds_send_start();
+	uds_send_message("hprecn_s");
+
+
 	// Wait until the end of the current vblank to invoke callbacks. If we
 	// call it too early, it can mistakenly think the render missed the
 	// vblank, and doesn't schedule render for the next vblank, causing frame

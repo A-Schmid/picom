@@ -17,34 +17,46 @@ int uds_running;
 // inspired by https://github.com/denehs/unix-domain-socket-example/blob/master/client.c
 void uds_init()
 {
+	printf("init uds\n");
 	struct sockaddr_un address;
 
 	if ((uds_fd = socket(AF_LOCAL, SOCK_STREAM, 0)) < 0) {
 		perror("failed to create UDS socket");
 		return;
 	}
+	printf("created socket\n");
 	
 	memset(&address, 0, sizeof(address));
 	address.sun_family = AF_LOCAL;
 	strcpy(address.sun_path, UDS_PATH);
-	unlink(UDS_PATH);
+	//unlink(UDS_PATH);
 
-	if (bind(uds_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-		perror("failed to bind UDS socket");
+	if (connect(uds_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+		perror("failed to connect UDS socket");
 		return;
 	}
+	printf("connected socket\n");
 
 	uds_running = 1;
 
 }
 
+void uds_send_message(const char* message)
+{
+	send(uds_fd, message, strlen(message) + 1, 0);
+}
+
 void uds_send_start()
 {
+	printf("send start\n");
+	fflush(stdout);
 	send(uds_fd, UDS_MESSAGE_START, 2, 0);
 }
 
 void uds_send_end()
 {
+	printf("send end\n");
+	fflush(stdout);
 	send(uds_fd, UDS_MESSAGE_END, 2, 0);
 }
 
