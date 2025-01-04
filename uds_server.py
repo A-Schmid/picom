@@ -13,18 +13,25 @@ except OSError:
     if os.path.exists(socket_path):
         raise
 
+connection_type = socket.SOCK_DGRAM
+
 # Create the Unix socket server
-server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+server = socket.socket(socket.AF_UNIX, connection_type) #stream
 
 # Bind the socket to the path
 server.bind(socket_path)
+#server.connect(socket_path)
 
-# Listen for incoming connections
-server.listen(1)
+if connection_type == socket.SOCK_STREAM:
 
-# accept connections
-print('Server is listening for incoming connections...')
-connection, client_address = server.accept()
+    # Listen for incoming connections
+    server.listen(1)
+
+    # accept connections
+    print('Server is listening for incoming connections...')
+    connection, client_address = server.accept()
+else:
+    connection = server
 
 start_time = time.time()
 end_time = time.time()
@@ -56,8 +63,9 @@ try:
             end_time = now
         """
 
-        print(f'{data} - {(now - last_time) * 1000:.2f}')
-        last_time = now
+        if "q_red" in data or "rend_end" in data:
+            print(f'{data} - {(now - last_time) * 1000:.2f}')
+            last_time = now
 
         
 
@@ -65,4 +73,4 @@ finally:
     # close the connection
     connection.close()
     # remove the socket file
-    os.unlink(socket_path)
+    #os.unlink(socket_path)

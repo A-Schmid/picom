@@ -13,14 +13,16 @@
 
 int uds_fd;
 int uds_running;
+int render_start_flag = 0;
+struct sockaddr_un address;
 
 // inspired by https://github.com/denehs/unix-domain-socket-example/blob/master/client.c
 void uds_init()
 {
 	printf("init uds\n");
-	struct sockaddr_un address;
 
-	if ((uds_fd = socket(AF_LOCAL, SOCK_STREAM, 0)) < 0) {
+	//if ((uds_fd = socket(AF_LOCAL, SOCK_STREAM, 0)) < 0) {
+	if ((uds_fd = socket(AF_LOCAL, SOCK_DGRAM, 0)) < 0) {
 		perror("failed to create UDS socket");
 		return;
 	}
@@ -29,13 +31,16 @@ void uds_init()
 	memset(&address, 0, sizeof(address));
 	address.sun_family = AF_LOCAL;
 	strcpy(address.sun_path, UDS_PATH);
-	//unlink(UDS_PATH);
 
-	if (connect(uds_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-		perror("failed to connect UDS socket");
-		return;
-	}
-	printf("connected socket\n");
+	// new for DGRAM
+	//unlink(UDS_PATH);
+	//bind(uds_fd, (struct sockaddr *)&address, sizeof(address));
+
+	//if (connect(uds_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+	//	perror("failed to connect UDS socket");
+	//	return;
+	//}
+	//printf("connected socket\n");
 
 	uds_running = 1;
 
@@ -43,20 +48,22 @@ void uds_init()
 
 void uds_send_message(const char* message)
 {
-	send(uds_fd, message, strlen(message) + 1, 0);
+	//printf("send %s\n", message);
+	//sendto(uds_fd, message, strlen(message) + 1, 0, (struct sockaddr *)&address, sizeof(address));
+	//send(uds_fd, message, strlen(message) + 1, 0);
 }
 
 void uds_send_start()
 {
-	printf("send start\n");
-	fflush(stdout);
+	//printf("send start\n");
+	//fflush(stdout);
 	send(uds_fd, UDS_MESSAGE_START, 2, 0);
 }
 
 void uds_send_end()
 {
-	printf("send end\n");
-	fflush(stdout);
+	//printf("send end\n");
+	//fflush(stdout);
 	send(uds_fd, UDS_MESSAGE_END, 2, 0);
 }
 

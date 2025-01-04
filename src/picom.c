@@ -302,7 +302,6 @@ enum vblank_callback_action reschedule_render_at_vblank(struct vblank_event *e, 
 
 // AS: maybe here?
 void schedule_render(session_t *ps, bool triggered_by_vblank attr_unused) {
-	uds_send_message("sc_ren_s");
 
 	// If the backend is busy, we will try again at the next vblank.
 	if (ps->backend_busy) {
@@ -318,6 +317,8 @@ void schedule_render(session_t *ps, bool triggered_by_vblank attr_unused) {
 		}
 		return;
 	}
+
+	uds_send_message("sc_ren_s");
 
 	// By default, we want to schedule render immediately, later in this function we
 	// might adjust that and move the render later, based on render timing statistics.
@@ -399,7 +400,12 @@ schedule:
 }
 
 void queue_redraw(session_t *ps) {
-	uds_send_message("q_redraw");
+	if (!render_start_flag)
+	{
+		uds_send_message("q_redraw");
+		uds_send_start();
+		render_start_flag = 1;
+	}
 
 	log_verbose("Queue redraw, render_queued: %d, backend_busy: %d",
 	            ps->render_queued, ps->backend_busy);
@@ -1763,6 +1769,8 @@ static void draw_callback_impl(EV_P_ session_t *ps, int revents attr_unused) {
 	}
 
 	uds_send_message("rend_end");
+	uds_send_end();
+	render_start_flag = 0;
 
 	// With frame pacing, we set backend_busy to true after the end of
 	// vblank. Without frame pacing, we won't be receiving vblank events, so

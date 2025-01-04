@@ -4,6 +4,8 @@
 
 extern int uds_fd;
 extern int uds_running;
+extern int render_start_flag;
+extern struct sockaddr_un address;
 
 void uds_init();
 void uds_send_start();

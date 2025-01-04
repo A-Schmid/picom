@@ -138,7 +138,7 @@ static bool check_sgi_video_sync_extension(Display *dpy, int screen) {
 
 static void *sgi_video_sync_thread(void *data) {
 
-	printf("sgi_video_sync_thread\n");
+	//printf("sgi_video_sync_thread\n");
 
 	auto args = (struct sgi_video_sync_thread_args *)data;
 	auto self = args->self;
@@ -232,8 +232,9 @@ static void *sgi_video_sync_thread(void *data) {
 		pthread_mutex_unlock(&self->vblank_requested_mtx);
 
 		// AS: looks like this is the blocking call that causes vsync delays
-		//uds_send_start();
+		uds_send_message("gl_sgi_s");
 		glXWaitVideoSyncSGI(1, 0, &last_msc);
+		uds_send_message("gl_sgi_e");
 		//uds_send_end();
 
 		struct timespec now = {};
@@ -294,7 +295,7 @@ sgi_video_sync_scheduler_callback(EV_P attr_unused, ev_async *w, int attr_unused
 
 static bool sgi_video_sync_scheduler_init(struct vblank_scheduler *base) {
 
-	printf("sgi_video_sync_scheduler_init\n");
+	//printf("sgi_video_sync_scheduler_init\n");
 
 	auto self = (struct sgi_video_sync_vblank_scheduler *)base;
 	auto args = (struct sgi_video_sync_thread_args){
