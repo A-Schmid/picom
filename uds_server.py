@@ -44,11 +44,12 @@ try:
     # receive data from the client
     while True:
         data_len = 1
-        data_len = 8
+        #data_len = 8
         data = connection.recv(data_len + 1)
         if not data:
+            print('no data')
             break
-        #print('Received data:', data.decode())
+        print('Received data:', data.decode())
 
         data = data.decode()
 
