@@ -217,7 +217,7 @@ static bool glx_set_swap_interval(int interval, Display *dpy, GLXDrawable drawab
 		glXSwapIntervalEXT(dpy, drawable, interval);
 		vsync_enabled = true;
 	}
-	printf("vsync state: %d\n", vsync_enabled);
+	//printf("vsync state: %d\n", vsync_enabled);
 	return vsync_enabled;
 }
 

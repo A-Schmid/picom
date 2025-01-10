@@ -19,14 +19,14 @@ struct sockaddr_un address;
 // inspired by https://github.com/denehs/unix-domain-socket-example/blob/master/client.c
 void uds_init()
 {
-	printf("init uds\n");
+	//printf("init uds\n");
 
 	//if ((uds_fd = socket(AF_LOCAL, SOCK_STREAM, 0)) < 0) {
 	if ((uds_fd = socket(AF_LOCAL, SOCK_DGRAM, 0)) < 0) {
 		perror("failed to create UDS socket");
 		return;
 	}
-	printf("created socket\n");
+	//printf("created socket\n");
 	
 	memset(&address, 0, sizeof(address));
 	address.sun_family = AF_LOCAL;
@@ -57,14 +57,16 @@ void uds_send_start()
 {
 	//printf("send start\n");
 	//fflush(stdout);
-	send(uds_fd, UDS_MESSAGE_START, 2, 0);
+	sendto(uds_fd, UDS_MESSAGE_START, 1, 0, (struct sockaddr *)&address, sizeof(address));
+	//send(uds_fd, UDS_MESSAGE_START, 2, 0);
 }
 
 void uds_send_end()
 {
 	//printf("send end\n");
 	//fflush(stdout);
-	send(uds_fd, UDS_MESSAGE_END, 2, 0);
+	sendto(uds_fd, UDS_MESSAGE_END, 1, 0, (struct sockaddr *)&address, sizeof(address));
+	//send(uds_fd, UDS_MESSAGE_END, 2, 0);
 }
 
 void uds_run()
